@@ -1,0 +1,48 @@
+from datetime import datetime
+
+class ActivityLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    action = db.Column(db.String(10))  # 'sign-in' or 'sign-out'
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref='logs')
+from datetime import datetime
+from models import ActivityLog
+@app.route('/log/<action>', methods=['POST'])
+@login_required
+def log_action(action):
+    if action not in ['sign-in', 'sign-out']:
+        flash("Invalid action")
+        return redirect(url_for('dashboard'))
+
+    new_log = ActivityLog(user_id=current_user.id, action=action)
+    db.session.add(new_log)
+    db.session.commit()
+    flash(f"{action.capitalize()} recorded at {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}")
+    return redirect(url_for('dashboard'))
+<h2>Welcome, {{ name }}!</h2>
+
+<form method="POST" action="{{ url_for('log_action', action='sign-in') }}">
+    <button type="submit">Sign In</button>
+</form>
+
+<form method="POST" action="{{ url_for('log_action', action='sign-out') }}">
+    <button type="submit">Sign Out</button>
+</form>
+
+<h3>Your Activity Log</h3>
+<table>
+    <tr>
+        <th>Action</th>
+        <th>Timestamp</th>
+    </tr>
+    {% for log in logs %}
+    <tr>
+        <td>{{ log.action }}</td>
+        <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<a href="{{ url_for('logout') }}">Logout</a>
