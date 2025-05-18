@@ -1,0 +1,25 @@
+let startTime = Date.now();
+let lastChangeTime = startTime;
+
+document.getElementById("codeBox").addEventListener("input", function () {
+    lastChangeTime = Date.now();
+});
+
+// Send activity update to backend every 30 seconds if user is active
+setInterval(() => {
+    let now = Date.now();
+    let idleTime = (now - lastChangeTime) / 1000;
+
+    if (idleTime < 30) {
+        fetch("/track", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                activityType: "coding",
+                timestamp: new Date().toISOString(),
+                sessionDuration: Math.floor((now - startTime) / 1000),
+                idleTime: idleTime
+            })
+        });
+    }
+}, 30000);
